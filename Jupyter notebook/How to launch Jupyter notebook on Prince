@@ -9,6 +9,7 @@ ssh -Y NETID@prince.hpc.nyu.edu
 cd $SCRATCH
 
 # Create a myjuptyer directory and copy the run-jupyter.sbatch file from the example directory in Prince (or create it)
+# Note: you will have to do that only once
 cp /share/apps/examples/jupyter/run-jupyter.sbatch /scratch/NETID/myjupyter
 
 # Run the jupyter job
