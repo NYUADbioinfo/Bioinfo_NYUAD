@@ -1,0 +1,118 @@
+###### PCA of SNPs with iPyrad #######
+
+## This document explains how to create a PCA from a VCF file containing multiple individuals (output from gatk)
+
+#1.	Install iPyrad
+
+# In your HOME directory, install miniconda from a Terminal window
+$ cd $HOME
+
+# First, install miniconda locally and create a dedicated environement
+$ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+$ bash Miniconda3-latest-Linux-x86_64.sh -b
+
+# Make it so miniconda is always in your PATH when you open terminal
+$ echo 'PATH=$HOME/miniconda3/bin/:$PATH' >> ~/.bashrc
+$ source ~/.bashrc
+
+
+## Install iPyrad with conda
+$ conda install ipyrad -c bioconda
+
+## also install the additional packages
+$ conda install notebook -c conda-forge
+$ conda install mpi4py -c conda-forge
+$ conda install htslib -c bioconda
+$ conda install bcftools -c bioconda
+$ conda install scikit-learn -c conda-forge
+$ pip install toyplot
+
+# create your dedicated environment and activate it
+$ conda create -n env_ipyrad -c bioconda python=3.7 ipyrad
+$ source activate env_ipyrad
+
+
+#2.	Clean your VCF file 
+
+# Place yourself in the working directory
+$ cd /scratch/…/working_directory/
+
+# compress the VCF file if not already done (creates a .vcf.gz)
+$ bgzip data.vcf
+
+# tabix index the compressed VCF (creates .vcf.gz.tbi)
+$ tabix data.vcf.gz
+
+# remove multi-allelic SNPs and INDELs and PIPE to next command
+$ bcftools view -m2 -M2 data.vcf.gz -Ou |
+
+    # remove extra annotations/formatting info and save to new .vcf
+    $ bcftools annotate -x FORMAT,INFO  > data.cleaned.vcf
+
+# recompress the final file (create .vcf.gz)
+$ bgzip data.cleaned.vcf
+
+
+#3.	Convert VCF to HDF5 file in iPyrad
+
+# Launch Python
+$ python
+
+# Once in python, load libraries
+$ import ipyrad.analysis as ipa
+$ import pandas as pd
+
+# place yourself in the working directory if not there yet
+$ import os
+$ os.chdir('/scratch/…/working_directory/')
+
+# init a conversion tool
+$ converter = ipa.vcf_to_hdf5(
+    name="data",
+    data="/scratch/…/working_directory/data.cleaned.vcf.gz",
+    ld_block_size=20000,
+)
+
+# run the converter
+$ converter.run()
+
+
+#4.	Run PCA in iPyrad
+
+# import the libraries for the PCA
+$ import ipyrad.analysis as ipa
+$ import toyplot
+
+# optional: group individuals into populations
+$ imap = {
+    "North": ["indiv_1", "indiv_5", "indiv_8"],
+    "South": ["indiv_7", "indiv_9"],
+    "West": ["indiv_3"],
+}
+
+# init a PCA tool and filter to allow no missing data (mincov=1)
+$ pca = ipa.pca(
+    data="./analysis-vcf2hdf5/data.hdf5",
+    mincov=1.0,
+	imap=imap
+)
+
+# run the PCA
+$ pca.run()
+
+# show the first ten samples and the first 10 PC axes
+$ df.iloc[:10, :10].round(2)
+
+# store the PC axes as a dataframe
+$ df = pd.DataFrame(pca.pcaxes[0], index=pca.names)
+
+# write the PC axes to a CSV file
+$ df.to_csv("pca_analysis.csv")
+
+# plot PC axes 0 and 2
+$ PCA_plot=pca.draw(0, 2);
+
+#save the pca plot into a pdf
+$ toyplot.pdf.render(PCA_plot[0], "PCA_plot.pdf")
+
+
