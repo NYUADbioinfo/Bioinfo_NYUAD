@@ -1,2 +1,2 @@
 # Bioinfo_NYUAD
-Repository for all kinds of bioinfo script
+Repository for all kinds of bioinfo scripts
