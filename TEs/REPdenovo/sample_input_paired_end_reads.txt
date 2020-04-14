@@ -1,0 +1,2 @@
+/scratch/ieh211/Ptychadena/resequencing/reads/Other/Sample_16-362_ShortReads_read1_trimmomatic_1PE.fastq 1 150 37
+/scratch/ieh211/Ptychadena/resequencing/reads/Other/Sample_16-362_ShortReads_read2_trimmomatic_2PE.fastq 1 150 37
